@@ -1,0 +1,51 @@
+#!/bin/bash
+
+
+#---------------------------------------------------------
+# Constants
+#---------------------------------------------------------
+IP_ADDR=192.168.0.110
+KILL_TIMEOUT_S=2
+KILL_SLEEP_DUR_S=0.1
+KILL_NUM_RETRIES=$( echo "$KILL_TIMEOUT_S / $KILL_SLEEP_DUR_S" | bc )
+
+
+#---------------------------------------------------------
+# Functions
+#---------------------------------------------------------
+function usage()
+    {
+    echo "Usage: $0 {start|stop|restart}"
+    }
+
+
+    
+case "$1" in
+    ""|start)
+        # Launch the synergy client
+        /usr/bin/synergyc $IP_ADDR
+        ;;
+    stop)
+        # Kill the synergy client
+        /usr/bin/killall synergyc
+        
+        # Wait until the synergy client has died, giving up after the max number of retries
+        for i in $(seq 1 $KILL_NUM_RETRIES)
+        do
+            if [ $(pgrep -x synergyc) ]; then
+                break
+            fi
+
+            sleep $KILL_SLEEP_DUR_S
+        done
+        ;;
+    r|restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        usage
+        exit 1
+        ;;
+esac
+
